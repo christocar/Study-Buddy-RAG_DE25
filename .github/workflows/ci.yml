@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v7
 
       # Install uv, with a cache so that packages are not downloaded every time it is run
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.4.0
         with:
           enable-cache: true
 
