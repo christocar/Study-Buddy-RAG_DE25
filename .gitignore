@@ -221,3 +221,72 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+
+# =============================================================
+# Study Buddy: FastAPI + Streamlit + PydanticAI + Postgres + LanceDB
+# Principle: ignore secrets and folders, not whole file types
+# =============================================================
+
+# --- 1. Secrets (a leaked key is a burned key) ---
+.env
+.env.*
+!.env.example
+secrets.toml
+*.p8
+*.pem
+*.key
+
+# --- 2. Python and uv ---
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+*.log
+
+# --- 3. Data (never in git) ---
+data/*
+!data/README.md
+!data/.gitkeep
+*.parquet
+*.zip
+*.gz
+*.tar
+*.sqlite
+*.sqlite3
+*.db
+
+# --- 4. LanceDB and Logfire ---
+# A local LanceDB database is a folder of .lance tables
+*.lance/
+# Logfire writes a token here. It ignores itself, this line is a second lock
+.logfire/
+
+# --- 5. scratch ---
+scratch/*
+!scratch/.gitkeep
+
+# --- 6. Editor and OS ---
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+
+# --- 7. Terraform and IaC ---
+# State and tfvars hold secrets in plain text. .terraform/ is the downloaded provider
+.terraform/
+*.tfstate
+*.tfstate.*
+terraform.tfvars
+tfplan
+crash.log
