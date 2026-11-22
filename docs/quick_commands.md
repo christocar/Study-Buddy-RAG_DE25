@@ -3,10 +3,13 @@
 Document is meant to work and be used as a quick cheatsheet for basic and quick terminal commands.
 
 * **Formatting and linting:**
+    * https://docs.astral.sh/ruff/linter/
+    * https://docs.astral.sh/ruff/formatter/
 ```bash
 uv run ruff check .
 uv run ruff format --check .
 ```
+
 
 * **Run test suite:**
 ```bash
