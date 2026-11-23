@@ -10,7 +10,7 @@
 # C: Ordningen: Servern svarar i annan ordning än väntat, vectors ska ändå hamna i rätt ordning.
 # D: En tappad vector ska krascha HÖGT(Fail LOUDLY) DIREKT och inte kontaminera vår data.
 # E: Modellen och formatet ska skickas i VARJE anrop.
-# f: Klienten utan NYCKEL ska ge KeyError med rätt namn.
+# F: Klienten utan NYCKEL ska ge KeyError med rätt namn.
 
 from types import SimpleNamespace
 
@@ -26,7 +26,7 @@ class FakeEmbeddings:
     Stand-in for client.embeddings. Records every call and returns FAKE vectors.
 
     The fake vector for a text is its LENGTH(LEN), repeated dim times.
-    This way every vector can be traced back to its next since
+    This way every vector can be traced back to its text since
     testing the order relies on that.
     """
 
@@ -75,6 +75,7 @@ def test_embed_texts_no_texts_makes_no_calls():
 
 
 # Decorator
+# B:
 @pytest.mark.parametrize(
     "n_texts, expected_batch_sizes",
     [
@@ -84,8 +85,6 @@ def test_embed_texts_no_texts_makes_no_calls():
         (63, [32, 31]),
     ],
 )
-
-# B
 def test_embed_texts_batches_at_32(n_texts, expected_batch_sizes):
     client = FakeClient()
     texts = [f"text {i}" for i in range(n_texts)]
@@ -97,7 +96,7 @@ def test_embed_texts_batches_at_32(n_texts, expected_batch_sizes):
     assert len(vectors) == n_texts
 
 
-# C
+# C:
 def test_embed_texts_keeps_text_order_when_server_reorders():
     client = FakeClient(dim=1, reverse=True)
 
@@ -107,7 +106,7 @@ def test_embed_texts_keeps_text_order_when_server_reorders():
     assert vectors == [[1.0], [2.0], [3.0]]
 
 
-# D
+# D:
 def test_embed_texts_raises_when_server_drops_a_vector():
     client = FakeClient(drop_last=True)
 
@@ -115,7 +114,7 @@ def test_embed_texts_raises_when_server_drops_a_vector():
         embed_texts(client, ["a", "bb", "ccc"])
 
 
-# E
+# E:
 def test_embed_texts_sends_model_and_float_format():
     client = FakeClient()
 
@@ -130,7 +129,7 @@ def test_embed_texts_sends_model_and_float_format():
         assert call["encoding_format"] == "float"
 
 
-# F
+# F:
 def test_client_without_key_raises_keyerror_with_the_right_name(monkeypatch):
     # monkeypatch tar bort nyckeln bara under testet och lägger tillbaka den efteråt
     monkeypatch.delenv("GRUNDEN_API_KEY", raising=False)
