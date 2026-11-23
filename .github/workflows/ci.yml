@@ -1,0 +1,34 @@
+# CI: checks every PR against main, and main after every merge
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      # Fetch the repos code to the GitHub machine 
+      - uses: actions/checkout@v7
+
+      # Install uv, with a cache so that packages are not downloaded every time it is run
+      - uses: astral-sh/setup-uv@v10.4.0
+        with:
+          enable-cache: true
+
+      # Install exactly what is specified in uv.lock. uv automatically fetches Python 3.13 based on .python-version
+      # --locked halts execution if uv.lock does not match pyproject.toml
+      - run: uv sync --locked
+
+      # Linting
+      - run: uv run ruff check .
+
+      # Formatting, check only. Does not modify any files
+      - run: uv run ruff format --check .
+
+      # Lastly after lint + format check
+      # Run testsuite
+      - run: uv run pytest
