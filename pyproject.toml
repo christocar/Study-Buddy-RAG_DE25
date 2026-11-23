@@ -24,6 +24,7 @@ default-groups = "all"
 backend = [
     "fastapi[standard]>=0.165.0",
     "lancedb>=0.41.0",
+    "openai>=3.57.0",
     "psycopg[binary]>=3.3.9",
     "pydantic-ai-slim[anthropic,evals,logfire,openai]>=2.71.0",
     "pypdf>=7.1.1",
