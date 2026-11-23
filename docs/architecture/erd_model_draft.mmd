@@ -1,0 +1,34 @@
+---
+config:
+  theme: neo-dark
+---
+%% Study Buddy: proposed data model, a draft for the group to slim down or change.
+%% Slimmed down version from KMS model. Comments marked "phase 2" or "optional" can wait.
+erDiagram
+    documents {
+        SERIAL id PK "one row per uploaded file"
+        VARCHAR255 filename "not null"
+        VARCHAR20 source_type "not null - pdf, txt, md, youtube"
+        TIMESTAMP created_at "default now"
+        VARCHAR20 status "phase 2 - processing, ready, failed"
+        TEXT error_message "phase 2"
+        VARCHAR64 file_hash "optional - unique, stops the same file twice"
+    }
+
+    chunks {
+        SERIAL id PK "the same id is the key in LanceDB"
+        INTEGER document_id FK "not null - unique together with chunk_index"
+        INTEGER chunk_index "not null - order in the document"
+        TEXT content "not null"
+        JSONB source_location "page, second or heading"
+        TIMESTAMP created_at "default now"
+        INTEGER char_count "optional - for chunking tests"
+    }
+
+    lancedb_vectors {
+        INTEGER chunk_id "same value as chunks.id"
+        VECTOR vector "size set by the embedding model"
+    }
+
+    documents ||--o{ chunks : "document_id"
+    chunks ||--|| lancedb_vectors : "chunk_id - no FK, separate database"
