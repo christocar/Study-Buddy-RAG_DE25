@@ -59,6 +59,6 @@ def embed_texts(client: OpenAI, texts: list[str]) -> list[list[float]]:
     # SKRIK OCH FAILA HÖGT: tappar servern en text hamnar varje vector efter den på FEL TEXT
     if len(vectors) != len(texts):
         raise RuntimeError(
-            f"Sent {len(texts)} texts, recieved {len(vectors)} vectors back."
+            f"Sent {len(texts)} texts, received {len(vectors)} vectors back."
         )
     return vectors
