@@ -16,3 +16,5 @@ uv run ruff format --check .
 uv run pytest       # For the entire suite
 uv run pytest -q    # If you want to run the entire suite but not be hit with a wall of text in terminal
 ```
+
+* 
