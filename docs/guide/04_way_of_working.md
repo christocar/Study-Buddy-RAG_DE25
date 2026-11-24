@@ -86,17 +86,17 @@ Co-authored-by: Putu Indira Mahadiva Arysaputri <indiramahadiva1@gmail.com>
 
 Everything in the document is approved at the meeting. These are the points where we need to choose.
 
-- [ ] **The columns on the board.** Proposal: Todo, In progress, In review and Done, as in the picture above.
-- [ ] **How quickly do we review?** Proposal: within a day on weekdays. If you don't have time, say so in Discord and someone else takes it.
-- [ ] **The language in the repo.** Proposal: English in code, comments, commits, PRs and `docs/`. The repo is public and is submitted.
-- [ ] **The demo.** Proposal: each track owner shows their own track, so everyone presents naturally.
-- [ ] **KC in the repo.** Proposal: Christoffer, who owns the repo, invites KC in phase 0.
+- [x] **The columns on the board.** Proposal: Todo, In progress, In review and Done, as in the picture above.
+- [x] **How quickly do we review?** Proposal: within a day on weekdays. If you don't have time, say so in Discord and someone else takes it.
+- [x] **The language in the repo.** Proposal: English in code, comments, commits, PRs and `docs/`. The repo is public and is submitted.
+- [x] **The demo.** Proposal: each track owner shows their own track, so everyone presents naturally.
+- [x] **KC in the repo.** Proposal: Christoffer, who owns the repo, invites KC in phase 0.
 
 ## Approved
 
 Tick your name when you have read and approved. If something changes after the meeting, everyone ticks again.
 
-- [ ] Aira
-- [ ] Christoffer
-- [ ] Indira
-- [ ] Johnny
+- [x] Aira
+- [x] Christoffer
+- [x] Indira
+- [x] Johnny
