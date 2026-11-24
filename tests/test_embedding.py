@@ -16,8 +16,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from study_buddy.ingestion.constants import EMBEDDING_MODEL
-from study_buddy.ingestion.embedding import embed_texts, get_embedding_client
+from study_buddy.embedding.constants import EMBEDDING_MODEL
+from study_buddy.embedding.embed import embed_texts, get_embedding_client
 
 
 # ===== FAKE EMBEDDINGS: Generera FAKE embeddings i samma form som OpenAI klienten =====

@@ -1,4 +1,4 @@
-# embedding.py - Texter in, vectors ut. Samma funktion för alla spår
+# embed.py - Texter in, vectors ut. Samma funktion för alla spår
 # Kod: Engelska
 # Kommentarer: Svenska
 
@@ -16,7 +16,7 @@ from itertools import batched
 
 from openai import OpenAI
 
-from study_buddy.ingestion.constants import (
+from study_buddy.embedding.constants import (
     BATCH_SIZE,
     EMBEDDING_MODEL,
     GRUNDEN_BASE_URL,
