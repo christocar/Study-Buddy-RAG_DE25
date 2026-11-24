@@ -1,0 +1,13 @@
+FROM python:3.13-slim
+
+WORKDIR /app/
+
+COPY pyproject.toml uv.lock README.md ./
+COPY src src
+
+RUN pip install --no-cache-dir uv
+
+# only streamlit + httpx, no fastapi or database stuff
+RUN uv sync --locked --no-default-groups --group frontend
+
+CMD ["uv", "run", "--no-sync", "streamlit", "run", "src/study_buddy/frontend/app.py", "--server.address=0.0.0.0", "--server.port=8501"]
