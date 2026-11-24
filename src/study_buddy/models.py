@@ -15,7 +15,7 @@ TODO: Update fields for when we need fields mentioned above.
 
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 # Class for the SECTIONS of our files
@@ -49,6 +49,8 @@ class Chunk(BaseModel):
     chunk_index is the position in its document and starts at 0 in
     EVERY document. This is NOT the id in Postgres that the chunk gets when saved.
     """
+
+    model_config = ConfigDict(extra="forbid")
 
     chunk_index: int
     content: str
