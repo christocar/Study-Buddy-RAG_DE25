@@ -1,5 +1,5 @@
 # Repo structure: Study Buddy
-*Johnny. Last updated 2026-11-22. Same setup as in the Data warehouse lab. The tree shows the repo after PR 2, plus what comes in phase 0.*
+*Johnny. Last updated 2026-11-24. Same setup as in the Data warehouse lab. The tree shows the repo in phase 0.*
 
 Purpose: where each file lives in the repo, and why it lives exactly there. The foundation is already in PR 2, so this is a map and not a build instruction.
 
@@ -28,12 +28,16 @@ Study-Buddy-RAG_DE25/
 ├── src/study_buddy/            # The package. uv sync installs it, so the import works from anywhere
 │   ├── __init__.py             # EMPTY. See "Who may import what"
 │   ├── models.py               # Phase 0: the Pydantic models that all tracks build against (proposal)
-│   ├── ingestion/              # Ingestion: extraction, chunking, embedding
+│   ├── embedding/              # Shared: the embedding model's facts and embed_texts(). Owned by Ingestion
+│   │   ├── constants.py        # Model, vector size, batch size, address. Belong to the index, not to .env
+│   │   └── embed.py            # get_embedding_client() and embed_texts()
+│   ├── ingestion/              # Ingestion: extraction and chunking
 │   │   └── loaders/            # One loader per file type: .txt and .md first, then PDF and YouTube
 │   ├── storage/                # Storage: Postgres and LanceDB
 │   ├── qa/                     # Retrieval & Generation: retrieval and the agent
 │   ├── api/                    # FastAPI
-│   │   ├── main.py             # Phase 0: app shell with GET /health. Collects the endpoint files below
+│   │   ├── main.py             # App shell. Creates the app and includes one router per track
+│   │   ├── health.py           # GET /health. The router the other tracks copy
 │   │   ├── upload.py           # POST /upload, written by Ingestion (proposal)
 │   │   ├── documents.py        # GET /documents, written by Storage (proposal)
 │   │   └── ask.py              # POST /ask, written by Retrieval & Generation (proposal)
@@ -57,15 +61,16 @@ Study-Buddy-RAG_DE25/
 ## Which track lives where
 
 ```text
-Ingestion                ingestion/    api/upload.py
+Ingestion                ingestion/    embedding/    api/upload.py
 Storage                  storage/      sql/       api/documents.py
 Retrieval & Generation   qa/           api/ask.py
-Frontend & Ops           frontend/     docker/    .github/    api/main.py
+Frontend & Ops           frontend/     docker/    .github/    api/main.py    api/health.py
 ```
 
-- **Ingestion:** one loader per file type in `loaders/`. All loaders hand over the same `Document`, so chunking never needs to know whether the text came from a PDF or a video. The embedding function also lives here.
+
+- **Ingestion:** one loader per file type in `loaders/`. All loaders hand over the same `Document`, so chunking never needs to know whether the text came from a PDF or a video. The embedding function lives in its own folder, `embedding/`, because three tracks use it: Ingestion embeds the chunks, Retrieval embeds the question, and Storage takes the vector size for the LanceDB table. Ingestion owns it.
 - **Storage:** `sql/schema.sql` creates the tables `documents` and `chunks`. The code that writes and reads them lives in `storage/`, together with the LanceDB table.
-- **Retrieval & Generation:** retrieval turns the question into a vector with Ingestion's embedding function, the same function and the same model. Then it fetches the nearest chunks from Storage and gives them to the agent.
+- **Retrieval & Generation:** retrieval turns the question into a vector with `embed_texts()` from `embedding/`, the same function and the same model as the chunks. Then it fetches the nearest chunks from Storage and gives them to the agent.
 - **Frontend & Ops:** the Streamlit app in `frontend/`, the Dockerfiles in `docker/`, CI in `.github/` and the app shell in `api/main.py`.
 
 **An endpoint is thin.** It receives the call, calls the track's function and sends back the answer. The logic lives in the track's folder, not in `api/`. Then it can be tested without starting FastAPI.
@@ -75,10 +80,11 @@ Frontend & Ops           frontend/     docker/    .github/    api/main.py
 ```text
 frontend/ ──HTTP──► api/ ──► ingestion/ ──► storage/
                     api/ ──► qa/ ─────────► storage/
-                             qa/ ─────────► ingestion/   (embedding function)
+
+ingestion/, qa/ and storage/ ──► embedding/
 ```
 
-The arrow means "imports from", and it only goes one way. `storage/` never imports from `ingestion/` or `qa/`, and nobody imports from `api/`.
+The arrow means "imports from", and it only goes one way. `storage/` never imports from `ingestion/` or `qa/`, and nobody imports from `api/`. `embedding/` imports nothing from the other folders, so every track can use it without pulling in another track.
 
 **Why frontend/ imports nothing.** The frontend container only installs the group `frontend`, that is Streamlit and httpx. If a Streamlit page imports something from `storage/`, psycopg comes along, and psycopg is not in the container. On your computer `uv sync` has installed all groups, so no error shows there. It only crashes in the container.
 
@@ -98,9 +104,10 @@ cp .env.example .env
 |---|---|
 | `ANTHROPIC_API_KEY` | Claude |
 | `NVIDIA_API_KEY` | NVIDIA build |
+| `GRUNDEN_API_KEY` | The embedding model, bge-m3 at Grunden |
 | `LOGFIRE_TOKEN` | Tracing in Logfire |
 
-The Postgres names come with Docker compose in phase 0, and the embedding model gets its names when it is chosen.
+The Postgres names are also in `.env.example`, for Docker compose. The embedding model needs only its key: the model, the vector size and the address are constants in `embedding/constants.py`, because they belong to the index and not to the environment.
 
 **A new name is added to `.env.example` in the same PR as the code that reads it.** Otherwise the next person crashes on a key they didn't know they needed.
 
@@ -146,7 +153,7 @@ git status --ignored                                            # everything tha
 
 ## To decide at the meeting
 
-- [ ] **Where do the Pydantic models live?** Proposal: `src/study_buddy/models.py`, one file in the package's root. All tracks in the backend import it, and it only imports Pydantic. If it lives in `storage/`, Ingestion has to import from Storage just to get the shape of a `Document`.
+- [x] **Where do the Pydantic models live?** Proposal: `src/study_buddy/models.py`, one file in the package's root. All tracks in the backend import it, and it only imports Pydantic. If it lives in `storage/`, Ingestion has to import from Storage just to get the shape of a `Document`.
 - [ ] **Where does LanceDB live locally?** Proposal: in `data/lancedb/`. `.gitignore` already ignores everything in `data/`, but the folder doesn't exist in the repo yet. `data/.gitkeep` is added in the same PR as the first code that writes there. In compose, LanceDB and Postgres live in volumes.
 - [ ] **What are the tests called?** Proposal: all test files directly in `tests/`, with the track first in the name: `test_ingestion_chunking.py`, `test_storage_postgres.py`. Two files that are both called `test_models.py` in different subfolders stop pytest before any test has run (tested). Small example files that we have written ourselves go in `tests/fixtures/`.
 
