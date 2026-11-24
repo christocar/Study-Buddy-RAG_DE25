@@ -1,0 +1,14 @@
+FROM python:3.13-slim
+
+WORKDIR /app/
+
+COPY pyproject.toml uv.lock README.md ./
+COPY src src
+
+RUN pip install --no-cache-dir uv
+
+# only the backend group, no streamlit in here
+RUN uv sync --locked --no-default-groups --group backend
+
+# --no-sync so uv doesn't try to install all groups again when the container starts
+CMD ["uv", "run", "--no-sync", "uvicorn", "study_buddy.api.main:app", "--host", "0.0.0.0", "--port", "8000"]

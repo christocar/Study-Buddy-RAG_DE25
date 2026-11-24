@@ -1,0 +1,11 @@
+# secrets and local stuff never go into the images
+.env
+.venv/
+.git/
+__pycache__/
+.ruff_cache/
+.pytest_cache/
+data/
+scratch/
+tests/
+docs/

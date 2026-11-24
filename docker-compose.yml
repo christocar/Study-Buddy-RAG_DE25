@@ -1,0 +1,28 @@
+services:
+  backend:
+    container_name: study-buddy-backend
+    # platform: linux/amd64
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    image: study-buddy-backend:v1
+
+  frontend:
+    container_name: study-buddy-frontend
+    # platform: linux/amd64
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.frontend
+    ports:
+      - "8501:8501"
+    depends_on:
+      - backend
+    environment:
+      - API_URL=http://backend:8000 # inside docker the backend is called "backend"
+    image: study-buddy-frontend:v1
+
+  # postgres: added by Aira in #6
