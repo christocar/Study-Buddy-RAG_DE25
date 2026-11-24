@@ -18,4 +18,4 @@ def test_ask_returns_the_model_answer():
 def test_agent_reads_model_name_from_env(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setenv("LLM_MODEL", "test")
     agent = build_agent()
-    assert agent.model is not None
+    assert isinstance(agent.model, TestModel)
