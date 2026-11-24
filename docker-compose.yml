@@ -25,4 +25,17 @@ services:
       - API_URL=http://backend:8000 # inside docker the backend is called "backend"
     image: study-buddy-frontend:v1
 
-  # postgres: added by Aira in #6
+  postgres:
+    container_name: study-buddy-postgres
+    image: postgres:18
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+
+volumes:
+  postgres_data:
