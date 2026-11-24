@@ -19,7 +19,7 @@ BATCH_SIZE = 32  # Grundens tak(limit) per anrop. 64 ger kod 422 (mätt 23 novem
 
 # ===== Modellen: Dokument + fråga MÅSTE embeddas med SAMMA modell =====
 EMBEDDING_MODEL = "bge-m3"
-EMBEDDING_DIM = 1024  # Storage behöver det här för LanceDB-tabellen
+EMBEDDING_DIM = 1024  # Antal TAL i varje VECTOR(the number of numbers in each vector)
 
 
 # ===== Chunking: PRELIMINÄRA värden, ses över i phase 1 =====
