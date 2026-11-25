@@ -52,3 +52,14 @@ def test_answer_survives_the_trip_through_json():
 def test_chunk_has_no_id_before_it_is_saved():
     with pytest.raises(ValidationError):
         Chunk(chunk_id=69, chunk_index=0, content="Text before it is saved.")
+
+
+# The typo is on purpose: the test plays a teammate who misspells source_location
+def test_misspelled_field_in_source_is_rejected():
+    with pytest.raises(ValidationError):
+        Source(
+            chunk_id=42,
+            filename="lecture.pdf",
+            source_locaton={"page": 3},
+            content="RAG retrieves before it generates.",
+        )
