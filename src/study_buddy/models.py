@@ -24,6 +24,8 @@ class Section(BaseModel):
     One page, one section of a video or the whole .txt file
     """
 
+    model_config = ConfigDict(extra="forbid")
+
     text: str
     # {"second": 125} for a video, {"page": 69} for a PDF or None for .txt and .md
     source_location: dict | None = None
@@ -34,6 +36,8 @@ class Document(BaseModel):
     """
     What every loader hands to our chunker.
     """
+
+    model_config = ConfigDict(extra="forbid")
 
     filename: str
     # Exact match so the loader lowercases our file suffixes(.pdf, .MD, .Txt etc)
@@ -65,6 +69,8 @@ class Source(BaseModel):
     chunk_id is chunks.id in Postgres. The SAME id the vector has in LanceDB.
     """
 
+    model_config = ConfigDict(extra="forbid")
+
     chunk_id: int
     filename: str
     source_location: dict | None = None
@@ -77,6 +83,8 @@ class Answer(BaseModel):
     What our POST /ask-endpoint returns.
     sources CAN be an empty list.
     """
+
+    model_config = ConfigDict(extra="forbid")
 
     answer: str
     sources: list[Source]
