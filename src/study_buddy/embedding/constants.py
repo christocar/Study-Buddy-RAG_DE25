@@ -26,3 +26,10 @@ EMBEDDING_DIM = 1024  # Antal TAL i varje VECTOR(the number of numbers in each v
 # Modellens tak. Längre texter kapas TYST utan felmeddelanden.
 # Chunkingens egna params (CHUNK SIZE + OVERLAP) läggs här som konstant när vi är där
 MAX_INPUT_TOKENS = 8192
+# Max antal TECKEN per chunk. Långt under taket ÄVEN om varje tecken blir EN token.
+CHUNK_SIZE = 1000
+# 20 % overlap av CHUNK_SIZE.
+CHUNK_OVERLAP = 200
+# Minst antal TECKEN för att inte hoppas över,
+# sidnummer, ensam rubrik, bara bilder ska inte ge en CHUNK.
+MIN_SECTION_CHARS = 20
