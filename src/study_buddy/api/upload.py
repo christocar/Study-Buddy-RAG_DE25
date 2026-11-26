@@ -5,9 +5,10 @@ from study_buddy.ingestion.pipeline import ingest_file
 router = APIRouter(tags=["upload"])
 
 
+# plain def, not async: the pipeline is blocking, so FastAPI runs this in a thread
 @router.post("/upload")
-async def upload(file: UploadFile) -> dict[str, int | str]:
-    content = await file.read()
+def upload(file: UploadFile) -> dict[str, int | str]:
+    content = file.file.read()
 
     try:
         # the pipeline does all the work: load, chunk, embed, save
