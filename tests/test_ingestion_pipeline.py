@@ -42,7 +42,7 @@ def fakes(monkeypatch):
         # Ids from 100, so a mix-up with chunk_index (0, 1, 2...) cannot pass
         return 7, [100 + chunk.chunk_index for chunk in chunks]
 
-    def fake_save_vectors(chunk_ids, vectors):
+    def fake_save_vectors(db, chunk_ids, vectors):
         calls["vectors"] = dict(zip(chunk_ids, vectors))
 
     # Swap the names INSIDE pipeline.py, where ingest_file looks them up.
@@ -73,6 +73,7 @@ def test_embedding_failure_saves_nothing(fakes, monkeypatch):
     def broken_embed_texts(client, texts):
         raise RuntimeError("Grunden is down")
 
+    monkeypatch.setattr(pipeline, "get_vector_db", lambda: None)
     monkeypatch.setattr(pipeline, "embed_texts", broken_embed_texts)
 
     with pytest.raises(RuntimeError, match="Grunden is down"):

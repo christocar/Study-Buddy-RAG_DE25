@@ -23,29 +23,11 @@ AFTER postgres, then the chunks stay without vectors.
 Phase 3s reconciliation will find those chunks without vectors/vectors without chunks.
 """
 
-import logging
-
 from study_buddy.embedding.embed import embed_texts, get_embedding_client
 from study_buddy.ingestion.chunker import chunk_document
 from study_buddy.ingestion.loaders.text import load_text_file
 from study_buddy.storage.postgres import get_connection, save_document
-
-logger = logging.getLogger(__name__)
-
-
-# ====== PLACEHOLDER UNTIL TICKET #28 (LanceDB) IS MERGED! ======
-# @ Christoffer: Replace this function with an import of YOUR real one.
-# I wrote this in Discord earlier:
-#
-#     save_vectors(chunk_ids: list[int], vectors: list[list[float]]) -> None
-# chunk_ids[i] belongs to vectors[i].
-#
-# If your name or signature is different, only this function and the call in ingest_file() change.
-def save_vectors(chunk_ids: list[int], vectors: list[list[float]]) -> None:
-    logger.warning(
-        "PLACEHOLDER: %d vectors NOT saved, waiting for LanceDB (#28).",
-        len(vectors),
-    )
+from study_buddy.storage.vector_store import get_vector_db, save_vectors
 
 
 # Function to ingest files.
@@ -79,6 +61,6 @@ def ingest_file(filename: str, data: bytes) -> int:
         document_id, chunk_ids = save_document(conn, document, chunks)
 
     # 5: Then LanceDB, under the ids Postgres just handed out.
-    save_vectors(chunk_ids, vectors)
+    save_vectors(get_vector_db(), chunk_ids, vectors)
 
     return document_id
