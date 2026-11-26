@@ -1,4 +1,4 @@
-# test_storage_postgres.py - Tests for save_document() against the real Postgres in compose
+# test_storage_postgres.py - Tests for save_document() and read_chunks_by_ids() against the real Postgres in compose
 #
 # These tests need Postgres. They use the pg_conn fixture from conftest.py, which
 # skips them when POSTGRES_HOST is not set (CI) and rolls everything back at the end.
@@ -7,8 +7,8 @@
 import psycopg
 import pytest
 
-from study_buddy.models import Chunk, Document, Section
-from study_buddy.storage.postgres import save_document
+from study_buddy.models import Answer, Chunk, Document, Section, Source
+from study_buddy.storage.postgres import read_chunks_by_ids, save_document
 
 
 # Small helpers so each test only shows what it is about
@@ -139,3 +139,88 @@ def test_failure_halfway_saves_nothing(pg_conn):
         "SELECT count(*) FROM documents WHERE filename = %s", ("broken.txt",)
     ).fetchone()[0]
     assert count == 0
+
+
+# ---- read_chunks_by_ids (ticket #27) ----
+
+
+# T10: each Source has the chunk's content, location and its document's filename
+def test_read_returns_sources_with_filename(pg_conn):
+    chunks = [
+        Chunk(chunk_index=0, content="first", source_location={"page": 3}),
+        Chunk(chunk_index=1, content="second"),
+    ]
+    _, chunk_ids = save_document(pg_conn, make_document("week1.txt"), chunks)
+
+    sources = read_chunks_by_ids(pg_conn, chunk_ids)
+
+    assert sources == [
+        Source(
+            chunk_id=chunk_ids[0],
+            filename="week1.txt",
+            source_location={"page": 3},
+            content="first",
+        ),
+        Source(
+            chunk_id=chunk_ids[1],
+            filename="week1.txt",
+            source_location=None,
+            content="second",
+        ),
+    ]
+
+
+# T11: the result follows the order of the ids, not the order in the table
+def test_read_keeps_the_order_of_the_ids(pg_conn):
+    _, chunk_ids = save_document(pg_conn, make_document(), make_chunks(3))
+    asked = [chunk_ids[2], chunk_ids[0], chunk_ids[1]]
+
+    sources = read_chunks_by_ids(pg_conn, asked)
+
+    assert [source.chunk_id for source in sources] == asked
+    assert [source.content for source in sources] == ["chunk 2", "chunk 0", "chunk 1"]
+
+
+# T12: chunks of two documents each get their own document's filename (the join)
+def test_read_across_two_documents(pg_conn):
+    _, first_ids = save_document(pg_conn, make_document("a.txt"), make_chunks(1))
+    _, second_ids = save_document(pg_conn, make_document("b.txt"), make_chunks(1))
+
+    sources = read_chunks_by_ids(pg_conn, [second_ids[0], first_ids[0]])
+
+    assert [source.filename for source in sources] == ["b.txt", "a.txt"]
+
+
+# T13: an empty list gives an empty list
+def test_read_empty_list(pg_conn):
+    assert read_chunks_by_ids(pg_conn, []) == []
+
+
+# T14: an id that is not in Postgres is skipped, the others still come back
+def test_read_skips_unknown_id(pg_conn):
+    _, chunk_ids = save_document(pg_conn, make_document(), make_chunks(2))
+    unknown_id = max(chunk_ids) + 1000
+
+    sources = read_chunks_by_ids(pg_conn, [chunk_ids[0], unknown_id, chunk_ids[1]])
+
+    assert [source.chunk_id for source in sources] == chunk_ids
+
+
+# T15: an id asked for twice comes back once, at its first place
+def test_read_returns_a_repeated_id_once(pg_conn):
+    _, chunk_ids = save_document(pg_conn, make_document(), make_chunks(2))
+
+    sources = read_chunks_by_ids(pg_conn, [chunk_ids[1], chunk_ids[0], chunk_ids[1]])
+
+    assert [source.chunk_id for source in sources] == [chunk_ids[1], chunk_ids[0]]
+
+
+# T16: the result fits the model. Answer accepts it as its sources
+def test_read_result_fits_answer(pg_conn):
+    _, chunk_ids = save_document(pg_conn, make_document(), make_chunks(2))
+
+    sources = read_chunks_by_ids(pg_conn, chunk_ids)
+
+    assert all(isinstance(source, Source) for source in sources)
+    answer = Answer(answer="Because of the notes.", sources=sources)
+    assert answer.sources == sources
