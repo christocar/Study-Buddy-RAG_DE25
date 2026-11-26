@@ -54,6 +54,7 @@ def fakes(monkeypatch):
     monkeypatch.setattr(pipeline, "embed_texts", fake_embed_texts)
     monkeypatch.setattr(pipeline, "get_connection", nullcontext)
     monkeypatch.setattr(pipeline, "save_document", fake_save_document)
+    monkeypatch.setattr(pipeline, "get_vector_db", lambda: None)
     monkeypatch.setattr(pipeline, "save_vectors", fake_save_vectors)
     return calls
 
@@ -76,7 +77,6 @@ def test_embedding_failure_saves_nothing(fakes, monkeypatch):
     def broken_embed_texts(client, texts):
         raise RuntimeError("Grunden is down")
 
-    monkeypatch.setattr(pipeline, "get_vector_db", lambda: None)
     monkeypatch.setattr(pipeline, "embed_texts", broken_embed_texts)
 
     with pytest.raises(RuntimeError, match="Grunden is down"):
