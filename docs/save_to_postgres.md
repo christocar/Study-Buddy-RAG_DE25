@@ -221,9 +221,19 @@ The pipeline hands over:
 ```python
 document = Document(filename="notes.txt", source_type="txt", sections=[...])
 chunks = [
-    Chunk(chunk_index=0, content="A primary key uniquely identifies a row...", source_location=None),
-    Chunk(chunk_index=1, content="A foreign key points to another table...",  source_location=None),
-    Chunk(chunk_index=2, content="An index makes lookups faster...",          source_location=None),
+    Chunk(
+        chunk_index=0,
+        content="A primary key uniquely identifies a row...",
+        source_location=None,
+    ),
+    Chunk(
+        chunk_index=1,
+        content="A foreign key points to another table...",
+        source_location=None,
+    ),
+    Chunk(
+        chunk_index=2, content="An index makes lookups faster...", source_location=None
+    ),
 ]
 ```
 
