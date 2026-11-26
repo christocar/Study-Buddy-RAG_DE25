@@ -243,9 +243,24 @@ flowchart TD
 
 ```python
 [
-    Source(chunk_id=44, filename="lecture.pdf", source_location={"page": 3}, content="Every table should have a primary key..."),
-    Source(chunk_id=41, filename="week1.txt",   source_location=None,        content="A primary key uniquely identifies a row..."),
-    Source(chunk_id=43, filename="week1.txt",   source_location=None,        content="An index makes lookups faster..."),
+    Source(
+        chunk_id=44,
+        filename="lecture.pdf",
+        source_location={"page": 3},
+        content="Every table should have a primary key...",
+    ),
+    Source(
+        chunk_id=41,
+        filename="week1.txt",
+        source_location=None,
+        content="A primary key uniquely identifies a row...",
+    ),
+    Source(
+        chunk_id=43,
+        filename="week1.txt",
+        source_location=None,
+        content="An index makes lookups faster...",
+    ),
 ]
 ```
 
@@ -421,10 +436,8 @@ Two things psycopg does for free that match what `Source` wants:
 ### Part 3: put them back in order
 
 ```python
-    by_id = {source.chunk_id: source for source in sources}
-    return [
-        by_id[chunk_id] for chunk_id in dict.fromkeys(chunk_ids) if chunk_id in by_id
-    ]
+by_id = {source.chunk_id: source for source in sources}
+return [by_id[chunk_id] for chunk_id in dict.fromkeys(chunk_ids) if chunk_id in by_id]
 ```
 
 Read it as three small ideas:
