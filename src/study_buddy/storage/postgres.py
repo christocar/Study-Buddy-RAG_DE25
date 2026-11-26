@@ -16,6 +16,7 @@ As agreed upon in meeting.
 import os
 
 import psycopg
+from psycopg.rows import class_row
 from psycopg.types.json import Jsonb
 
 from study_buddy.models import Chunk, Document
@@ -91,3 +92,41 @@ def save_document(
             chunk_ids.append(chunk_id)
 
     return document_id, chunk_ids
+
+
+def read_chunks_by_ids(conn: psycopg.Connection, chunk_ids: list[int]) -> list[Source]:
+    """
+    Read chunks back by id. Returns one Source per chunk, with the chunk's
+    content and source_location and the filename of its document.
+
+    Called by Retrieval, right after the LanceDB search. LanceDB gives the ids
+    closest first, and the sources dropdown shows them in that order, so the
+    result is in the SAME order as chunk_ids.
+
+    An id that does not exist in Postgres is skipped, so the result can be
+    shorter than chunk_ids. That can happen when LanceDB has a vector without a
+    chunk (phase 3 reconciliation finds those). An id that is asked for twice
+    comes back once, at its first place. An empty list gives an empty list.
+    """
+    if not chunk_ids:
+        return []
+
+    # filename lives in documents, not in chunks, so the two tables are joined.
+    # ANY(%s) takes the whole list as one parameter. The AS names must match
+    # the field names of Source, because class_row(Source) builds a Source
+    # straight from each row. psycopg already turns JSONB into a dict and NULL
+    # into None, which is what Source.source_location expects.
+    with conn.cursor(row_factory=class_row(Source)) as cur:
+        sources = cur.execute(
+            "SELECT c.id AS chunk_id, d.filename, c.source_location, c.content "
+            "FROM chunks AS c JOIN documents AS d ON d.id = c.document_id "
+            "WHERE c.id = ANY(%s)",
+            (chunk_ids,),
+        ).fetchall()
+
+    # SQL gives no promise about row order, so put the Sources back in the
+    # order of chunk_ids. dict.fromkeys keeps the first place of each id.
+    by_id = {source.chunk_id: source for source in sources}
+    return [
+        by_id[chunk_id] for chunk_id in dict.fromkeys(chunk_ids) if chunk_id in by_id
+    ]
