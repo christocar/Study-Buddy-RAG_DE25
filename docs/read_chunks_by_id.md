@@ -1,13 +1,5 @@
 # Ticket #27: Read chunks by id. Explained from zero
 
-*Study notes for Aira. Written 2026-11-26. Ticket: https://github.com/christocar/Study-Buddy-RAG_DE25/issues/27*
-*Code: `src/study_buddy/storage/postgres.py` -> `read_chunks_by_ids()` · Tests: `tests/test_storage_postgres.py` (T10 to T16)*
-*Companion files: `scratch/aira/agents/04_read_chunks_by_id_27.md` (the task tracker) and `pr_26_save_to_postgres.md` (the ticket before this one)*
-
----
-
-## 0. The whole ticket in 30 seconds
-
 > LanceDB (the vector search) answers a question with **a list of numbers**: "the closest chunks are 44, 41 and 43."
 > Numbers are useless to a student. So `read_chunks_by_ids()` goes to **Postgres** and turns those numbers back into **real text + the file name + the place** (page or second), in the **same order**.
 
@@ -20,7 +12,6 @@ flowchart LR
     class F mine
 ```
 
-That is all it does. Everything below explains **why** it is needed, **how** the pieces fit and **what each line of code means**.
 
 ### Table of contents
 
@@ -562,8 +553,6 @@ uv run pytest -v
 
 ### 12b. Play with the SQL in pgAdmin
 
-Open the Query Tool (see the steps in `pr_26_save_to_postgres.md`). Run these **one at a time** (select it, press F5). Use ids that really exist in your table (`SELECT id FROM chunks;` first).
-
 **1. See the JOIN working:**
 
 ```sql
@@ -621,53 +610,3 @@ for s in sources:
 | Calling `commit` here | Not needed. This function only reads | Reading changes nothing, so there is nothing to save |
 
 ---
-
-## 14. Self-quiz
-
-Cover the right column and answer out loud. If you can answer all of these, you understand the ticket.
-
-| Question | Answer |
-|---|---|
-| Why do we have two databases? | Postgres keeps the real text and metadata. LanceDB finds the closest meaning by vector. Neither does the other's job well |
-| What links a row in Postgres to a vector in LanceDB? | The same `chunk_id` (`chunks.id`) |
-| What does `read_chunks_by_ids` take and return? | A list of chunk ids (closest first) -> a list of `Source` in the same order |
-| Why do we need a JOIN? | `filename` lives in `documents`, not in `chunks`. The JOIN follows `document_id` to get it |
-| Why `ANY(%s)` and not a loop or an f-string? | One query for the whole list, and safe because it is a parameter |
-| Why must the order be fixed in Python? | SQL gives no order promise, and the dropdown and the LLM want the best match first |
-| What does `class_row(Source)` do? | Builds a `Source` from each row by matching column names to field names |
-| Why `AS chunk_id`? | So the column name matches the `Source` field name |
-| What does `dict.fromkeys(ids)` do here? | Removes repeated ids but keeps the first place and the order |
-| What happens with an id that is not in Postgres? | It is skipped. The result is shorter than the input |
-| Who calls this function, and when? | Retrieval, right after the LanceDB search |
-| Why are these tests skipped in CI? | GitHub has no Postgres and `POSTGRES_HOST` is not set |
-
----
-
-## 15. Glossary
-
-| Word | Simple meaning |
-|---|---|
-| **RAG** | Retrieval-Augmented Generation. Find relevant text first (retrieval), then let an LLM answer using only that text (generation) |
-| **Chunk** | A small piece of a document (a few sentences or a paragraph) |
-| **Embedding / vector** | A list of numbers (1024 for us) that captures the *meaning* of a text. Similar meaning = similar numbers |
-| **Vector search** | Finding the vectors closest to the question's vector |
-| **LanceDB** | The vector database. Stores `chunk_id` + vector |
-| **Postgres** | The normal (relational) database. Stores documents and chunks as rows |
-| **JOIN** | Combine rows from two tables where a column matches |
-| **Foreign key** | A column that points to another table's id (`chunks.document_id` -> `documents.id`) |
-| **Alias (`AS`)** | A temporary new name for a column or table inside one query |
-| **Parameter (`%s`)** | A placeholder. The value is sent separately, so it can never be run as SQL |
-| **psycopg** | The Python library that talks to Postgres |
-| **Cursor** | The object you use to run SQL and fetch results on a connection |
-| **Row factory** | A setting that decides what Python object each result row becomes (tuple, dict, model...) |
-| **`class_row`** | A row factory that builds a class (here `Source`) from each row |
-| **JSONB** | A Postgres column type for JSON. psycopg returns it as a Python `dict` |
-| **Transaction** | A group of DB steps that succeed or fail together |
-| **Rollback** | Undo everything in the current transaction. Our tests do this so the DB stays clean |
-| **Fixture (`pg_conn`)** | A pytest helper that prepares something a test needs (here a connection) and cleans up after |
-| **Pydantic model** | A class that checks the shape and types of data (`Source`, `Answer`...) |
-| **Orphan vector** | A vector in LanceDB with no chunk in Postgres. Phase 3 reconciliation finds them |
-
----
-
-*Changelog: 2026-11-26. Created from the code in the working tree of `feat/read-chunks-by-id` (not committed yet) and the tracker `04_read_chunks_by_id_27.md`.*
