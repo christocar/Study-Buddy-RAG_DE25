@@ -19,7 +19,7 @@ import psycopg
 from psycopg.rows import class_row
 from psycopg.types.json import Jsonb
 
-from study_buddy.models import Chunk, Document
+from study_buddy.models import Chunk, Document, Source
 
 
 def get_connection() -> psycopg.Connection:
