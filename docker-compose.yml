@@ -12,6 +12,9 @@ services:
     environment:
       POSTGRES_HOST: postgres
       POSTGRES_PORT: "5432"
+      LANCEDB_PATH: /app/data/lancedb
+    volumes:
+      - lancedb_data:/app/data/lancedb
     image: study-buddy-backend:v1
 
   frontend:
@@ -43,3 +46,4 @@ services:
 
 volumes:
   postgres_data:
+  lancedb_data:
