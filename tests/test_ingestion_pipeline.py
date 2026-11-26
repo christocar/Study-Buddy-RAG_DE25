@@ -19,12 +19,15 @@ from contextlib import nullcontext
 
 import pytest
 
-from study_buddy.embedding.constants import CHUNK_SIZE, MIN_SECTION_CHARS
+from study_buddy.embedding.constants import CHUNK_SIZE, EMBEDDING_DIM, MIN_SECTION_CHARS
 from study_buddy.ingestion import pipeline
+from study_buddy.storage.vector_store import get_vector_db, save_vectors, search_vectors
 
 # Built from the constants, like the chunker tests, so they hold if they change
 LONG_TEXT = ("word " * CHUNK_SIZE).encode("utf-8")  # several chunks
 SHORT_TEXT = ("x" * (MIN_SECTION_CHARS - 1)).encode("utf-8")  # no chunk at all
+# Numbers arre used instead of one repeated word, so that no two chunks have the same text
+NUMBERED_TEXT = " ".join(str(n) for n in range(CHUNK_SIZE)).encode("utf-8")
 
 
 @pytest.fixture
@@ -89,3 +92,31 @@ def test_too_short_text_stops_early(fakes):
 
     assert fakes["embedded"] is None
     assert fakes["saved_chunks"] is None
+
+
+# Test 4: a chunks own text asked as a question should give that chunk back first.
+# Using the real LanceDB this time in a temp folder that pytest removes after testing.
+def test_chunk_text_find_its_own_chunk_first(fakes, monkeypatch, tmp_path):
+    directions = {}
+
+    def text_to_vectors(text):
+        # The same text ALWAYS points the same way. New text gets a new direction
+        vector = [0.0] * EMBEDDING_DIM
+        vector[directions.setdefault(text, len(directions))] = 1.0
+        return vector
+
+    def fake_embed_texts(client, texts):
+        return [text_to_vectors(text) for text in texts]
+
+    db = get_vector_db(str(tmp_path))
+    monkeypatch.setattr(pipeline, "embed_texts", fake_embed_texts)
+    monkeypatch.setattr(pipeline, "get_vector_db", lambda: db)
+    monkeypatch.setattr(pipeline, "save_vectors", save_vectors)  # the real one again
+
+    pipeline.ingest_file("bella_the_bunny.txt", NUMBERED_TEXT)
+
+    chunks = fakes["saved_chunks"]
+    assert len(chunks) > 1
+    for chunk in chunks:
+        hits = search_vectors(db, text_to_vectors(chunk.content))
+        assert hits[0] == 100 + chunk.chunk_index
