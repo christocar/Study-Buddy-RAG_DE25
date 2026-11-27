@@ -8,7 +8,7 @@ Who calls it: ingest_file()-function in ingestion/pipeline.py (ticket #34),
 right after the loader (ticket 24) and before save_document (ticket #26).
 
 Each Section is cut on its own, this way no Chunk can span over two Sections
-and every Chunk keeps its Section's source_location.
+and every Chunk keeps its Sections source_location.
 
 chunk_index counts from 0 across the whole document.
 """
