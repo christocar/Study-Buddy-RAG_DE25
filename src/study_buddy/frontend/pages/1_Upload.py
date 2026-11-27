@@ -14,7 +14,7 @@ if uploaded and st.button("Upload"):
         try:
             result = upload_file(uploaded.name, uploaded.getvalue())
             st.success(
-                f"Uploaded **{result['filename']}**(document id {result['document_id']})"
+                f"Uploaded **{result['filename']}** (document id {result['document_id']})"
             )
         except httpx.HTTPError as error:
             st.error(error_message(error))
