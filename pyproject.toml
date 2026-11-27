@@ -28,6 +28,7 @@ backend = [
     "psycopg[binary]>=3.3.9",
     "pydantic-ai-slim[anthropic,evals,logfire,openai]>=2.71.0",
     "pypdf>=7.1.1",
+    "youtube-transcript-api>=1.2.5",
 ]
 dev = [
     "ipykernel>=7.4.0",
