@@ -31,3 +31,11 @@ def error_message(error: httpx.HTTPError) -> str:
         except (ValueError, KeyError):
             return f"Backend error {error.response.status_code}"
     return f"Can't reach the backend at {API_URL}"
+
+
+def ask(question: str) -> dict:
+    # returns the Answer shape: {"answer": "...", "sources": [...]}
+    # the agent can take a while to think, so a longer timeout
+    response = httpx.post(f"{API_URL}/ask", json={"question": question}, timeout=120)
+    response.raise_for_status()
+    return response.json()
