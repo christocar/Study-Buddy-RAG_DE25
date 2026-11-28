@@ -51,7 +51,7 @@ def ingest_document(document: Document) -> int:
     # Stops here before the API call and the database
     if not chunks:
         raise ValueError(
-            f"Cant ingest: {document.filename}. It contains too little text to search."
+            f"Can't ingest: {document.filename}. It contains too little text to search."
         )
 
     # Step 3: One vector per chunk, embed_texts keeps the order of the texts

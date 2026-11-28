@@ -183,7 +183,7 @@ def load_youtube(url: str) -> Document:
         raise
     except CouldNotRetrieveTranscript as error:
         raise ValueError(
-            f"Could NOT load the video '{video_id}':, no usable English transcript "
+            f"Could NOT load the video '{video_id}': no usable English transcript "
             f"({type(error).__name__})."
         ) from error
 
@@ -191,7 +191,7 @@ def load_youtube(url: str) -> Document:
     sections = build_section(fetched.snippets)
     if not sections:
         raise ValueError(
-            f"Could NOT load the video '{video_id}': there is no transcript.."
+            f"Could NOT load the video '{video_id}': there is no transcript."
         )
 
     # Step 4: The tilename finds the video again:
