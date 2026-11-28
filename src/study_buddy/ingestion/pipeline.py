@@ -6,7 +6,8 @@
 """
 Ingestion pipeline.
 
-Who calls it: POST /upload-endpoint (ticket #35) and NOTHING else.
+Who calls it: POST /upload-endpoint through ingest_file (ticket #35)
+AND POST /youtube (Ticket #50) through ingest_document.
 This is the ONLY place that writes to BOTH databases.
 
 The order of the entire flow is:
@@ -26,8 +27,46 @@ Phase 3s reconciliation will find those chunks without vectors/vectors without c
 from study_buddy.embedding.embed import embed_texts, get_embedding_client
 from study_buddy.ingestion.chunker import chunk_document
 from study_buddy.ingestion.loaders.text import load_text_file
+from study_buddy.models import Document
 from study_buddy.storage.postgres import get_connection, save_document
 from study_buddy.storage.vector_store import get_vector_db, save_vectors
+
+
+# Function to ingest a complete and finished Document
+def ingest_document(document: Document) -> int:
+    """
+    Runs a Document through chunking, embedding, saving and then
+    returns the documents id.
+
+    Raises ValueError if the text is too short for a single chunk.
+
+    (Less than MIN_SECTION_CHARS constant)
+    """
+    # Step 2: Document --> Chunks
+    # In the chunk_index order (0, 1, 2, ..., 69, etc)
+    chunks = chunk_document(document)
+
+    # Loader REFUSES an empty file.
+    # text under MIN_SECTION_CHARS constant still gives 0 chunks.
+    # Stops here before the API call and the database
+    if not chunks:
+        raise ValueError(
+            f"Can't ingest: {document.filename}. It contains too little text to search."
+        )
+
+    # Step 3: One vector per chunk, embed_texts keeps the order of the texts
+    # This way, vectors[i] will belong to chunks[i]
+    texts = [chunk.content for chunk in chunks]
+    vectors = embed_texts(get_embedding_client(), texts)
+
+    # Step 4: SAVE TO THE TRUTH FIRST(postgres).
+    with get_connection() as conn:
+        document_id, chunk_ids = save_document(conn, document, chunks)
+
+    # Step 5: LanceDB under the ids Postgres just gave out.
+    save_vectors(get_vector_db(), chunk_ids, vectors)
+
+    return document_id
 
 
 # Function to ingest files.
@@ -38,29 +77,6 @@ def ingest_file(filename: str, data: bytes) -> int:
     Raises a ValueError if the loader refuses the file, or if the text is too
     short to give a single chunk (less than MIN_SECTION_CHARS constant).
     """
-    # 1 and 2: File --> Document --> Chunks
-    # in the chunk_index order (0, 1, 2, ... , 69, ... ...)
+    # Step 1: File --> Document, then the rest of the way in ingest_document
     document = load_text_file(filename, data)
-    chunks = chunk_document(document)
-
-    # The loader refuses an empty file,
-    # but a very short text still gives no chunks.
-    # Stop here, BEFORE the API call and the database.
-    if not chunks:
-        raise ValueError(
-            f"Cannot ingest '{filename}': contains too little text to search."
-        )
-
-    # 3: One vector per chunk. embed_texts keeps the order of the texts, so that
-    # vectors[i] belongs to chunks[i].
-    texts = [chunk.content for chunk in chunks]
-    vectors = embed_texts(get_embedding_client(), texts)
-
-    # 4: Postgres FIRST, since it hands out the chunk ids, in chunk_index order.
-    with get_connection() as conn:
-        document_id, chunk_ids = save_document(conn, document, chunks)
-
-    # 5: Then LanceDB, under the ids Postgres just handed out.
-    save_vectors(get_vector_db(), chunk_ids, vectors)
-
-    return document_id
+    return ingest_document(document)

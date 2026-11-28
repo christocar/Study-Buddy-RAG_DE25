@@ -95,7 +95,7 @@ def test_too_short_text_stops_early(fakes):
 
 
 # Test 4: a chunks own text asked as a question should give that chunk back first.
-# Using the real LanceDB this time in a temp folder that pytest removes after testing.
+# Using lanceDB in a temp folder
 def test_chunk_text_find_its_own_chunk_first(fakes, monkeypatch, tmp_path):
     directions = {}
 
@@ -111,7 +111,7 @@ def test_chunk_text_find_its_own_chunk_first(fakes, monkeypatch, tmp_path):
     db = get_vector_db(str(tmp_path))
     monkeypatch.setattr(pipeline, "embed_texts", fake_embed_texts)
     monkeypatch.setattr(pipeline, "get_vector_db", lambda: db)
-    monkeypatch.setattr(pipeline, "save_vectors", save_vectors)  # the real one again
+    monkeypatch.setattr(pipeline, "save_vectors", save_vectors)
 
     pipeline.ingest_file("bella_the_bunny.txt", NUMBERED_TEXT)
 
